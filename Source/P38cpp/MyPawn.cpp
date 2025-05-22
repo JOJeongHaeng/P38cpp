@@ -74,6 +74,8 @@ void AMyPawn::Tick(float DeltaTime)
 
 	AddMovementInput(GetActorForwardVector(), Boost);
 
+	Left->AddWorldRotation(FRotator(RotateSpeed, 0, 0));
+	Right->AddWorldRotation(FRotator(RotateSpeed, 0, 0));
 }
 
 // Called to bind functionality to input

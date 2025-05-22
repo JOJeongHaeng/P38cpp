@@ -60,7 +60,7 @@ public:
 	TObjectPtr<UArrowComponent> Arrow;
 
 	UPROPERTY(VisibleAnywhere, Category = "Data", BlueprintReadWrite)
-	float MoveSpeed = 10.f;
+	float MoveSpeed = 300.f;
 
 	UPROPERTY(VisibleAnywhere, Category = "Data", BlueprintReadWrite)
 	float RotateSpeed = 60.f;
