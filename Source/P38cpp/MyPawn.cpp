@@ -8,6 +8,9 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
+#include "Components/ArrowComponent.h"
+#include "MyActor.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 AMyPawn::AMyPawn()
@@ -58,6 +61,11 @@ AMyPawn::AMyPawn()
 
 	Movement->MaxSpeed = MoveSpeed;
 
+	Arrow = CreateDefaultSubobject<UArrowComponent>(TEXT("Arrow"));
+	Arrow->SetupAttachment(Box);
+	Arrow->SetRelativeLocation(FVector(20.f, 0, 0));
+
+	Tags.Add(TEXT("Player"));
 }
 
 // Called when the game starts or when spawned
@@ -74,8 +82,8 @@ void AMyPawn::Tick(float DeltaTime)
 
 	AddMovementInput(GetActorForwardVector(), Boost);
 
-	Left->AddWorldRotation(FRotator(RotateSpeed, 0, 0));
-	Right->AddWorldRotation(FRotator(RotateSpeed, 0, 0));
+	Left->AddWorldRotation(FRotator(0, 0, 7200 * UGameplayStatics::GetWorldDeltaSeconds(GetWorld())));
+	Right->AddWorldRotation(FRotator(0, 0, 7200 * UGameplayStatics::GetWorldDeltaSeconds(GetWorld())));
 }
 
 // Called to bind functionality to input
@@ -83,5 +91,39 @@ void AMyPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+	PlayerInputComponent->BindAction(TEXT("Fire"), EInputEvent::IE_Pressed, this, &AMyPawn::Fire);
+
+	PlayerInputComponent->BindAction(TEXT("Boost"), EInputEvent::IE_Pressed, this, &AMyPawn::Doboost);
+	
+	PlayerInputComponent->BindAction(TEXT("Boost"), EInputEvent::IE_Released, this, &AMyPawn::Unboost);
+
+	PlayerInputComponent->BindAxis(TEXT("Pitch"), this, &AMyPawn::Pitch);
+
+	PlayerInputComponent->BindAxis(TEXT("Roll"), this, &AMyPawn::Roll);
 }
 
+void AMyPawn::Pitch(float Value)
+{
+	AddActorWorldRotation(FRotator(FMath::Clamp(Value, -1.0f, 1.0f), 0, 0) * RotateSpeed * UGameplayStatics::GetWorldDeltaSeconds(GetWorld()));
+}
+
+void AMyPawn::Roll(float Value)
+{
+	AddActorWorldRotation(FRotator(0, 0, FMath::Clamp(Value, -1.0f, 1.0f) * RotateSpeed * UGameplayStatics::GetWorldDeltaSeconds(GetWorld())));
+}
+
+void AMyPawn::Fire()
+{
+	// 문법 : CDO 포인터를 가르킴
+	// 의미 : 클래스 이름을 저장하고 싶을 때
+	// RocketTemplate = AMyActor::StaticClass();
+	GetWorld()->SpawnActor<AMyActor>(RocketTemplate, Arrow->K2_GetComponentToWorld());
+}
+void AMyPawn::Doboost()
+{
+	Boost = 1.0f;
+}
+void AMyPawn::Unboost()
+{
+	Boost = 0.5f;
+}
